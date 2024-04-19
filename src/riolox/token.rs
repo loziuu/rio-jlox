@@ -1,9 +1,6 @@
-#[derive(Debug)]
-pub(crate) struct Token {
-    t: TokenType
-}
+use std::fmt::Display;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub(crate) enum TokenType {
     // Single characters
     LeftParen,
@@ -24,7 +21,7 @@ pub(crate) enum TokenType {
     Equal,
     EqualEqual,
     Greater,
-    GreaterThan,
+    GreaterEqual,
     Less,
     LessEqual,
 
@@ -52,4 +49,45 @@ pub(crate) enum TokenType {
     While,
 
     Eof,
+}
+
+#[derive(Debug)]
+pub(crate) struct Token {
+    t: TokenType,
+    lexeme: String,
+    line: usize,
+    literal: String,
+}
+
+impl Token {
+    pub fn new(t: TokenType, lexeme: String, literal: &str, line: usize) -> Self {
+        Token {
+            t,
+            lexeme: lexeme.to_string(),
+            line,
+            literal: literal.to_string(),
+        }
+    }
+
+    pub fn token_type(&self) -> &TokenType {
+        &self.t
+    }
+
+    pub fn line(&self) -> usize {
+        self.line
+    }
+
+    pub fn lexeme(&self) -> &str {
+        &self.lexeme
+    }
+
+    pub fn literal(&self) -> &str {
+        &self.literal
+    }
+}
+
+impl Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?} {} {}", self.t, self.lexeme, self.literal)
+    }
 }

@@ -7,5 +7,10 @@ pub(crate) enum CompilationError {
     UndefinedError,
 }
 
+pub fn error(line: usize, msg: &str) {
+    report(line, "", msg)
+}
 
-
+pub fn report(line: usize, error: &str, reason: &str) {
+    println!("[line {}] Error {}: {}", line, error, reason)
+}

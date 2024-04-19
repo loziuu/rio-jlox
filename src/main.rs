@@ -50,7 +50,7 @@ fn run(source: String) {
 }
 
 fn try_run(source: String) -> CompilerResult {
-    let scanner = Scanner::new(source);
+    let mut scanner = Scanner::new(source);
     let tokens = scanner.scan_tokens();
 
     for token in tokens {
@@ -60,10 +60,4 @@ fn try_run(source: String) -> CompilerResult {
     Ok(())
 }
 
-fn error(line: u32, msg: &str) {
-    report(line, "", msg)
-}
 
-fn report(line: u32, error: &str, reason: &str) {
-    println!("[line {}] Error {}: {}", line, error, reason)
-}
