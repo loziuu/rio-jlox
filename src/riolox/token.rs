@@ -32,7 +32,7 @@ pub(crate) enum TokenType {
 
     // Keywords
     And,
-    Classs,
+    Class,
     Else,
     False,
     Fun,
@@ -51,10 +51,40 @@ pub(crate) enum TokenType {
     Eof,
 }
 
+impl From<&str> for TokenType {
+    fn from(value: &str) -> Self {
+        match value {
+            "and" => TokenType::And,
+            "class" => TokenType::Class,
+            "else" => TokenType::Else,
+            "false" => TokenType::False,
+            "for" => TokenType::For,
+            "fun" => TokenType::Fun,
+            "if" => TokenType::If,
+            "nil" => TokenType::Nil,
+            "or" => TokenType::Or,
+            "print" => TokenType::Print,
+            "return" => TokenType::Return,
+            "super" => TokenType::Super,
+            "this" => TokenType::This,
+            "true" => TokenType::True,
+            "var" => TokenType::Var,
+            "while" => TokenType::While,
+            _ => TokenType::Identifier
+        }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub(crate) enum TokenValue {
+    Str(String),
+    Num(f64),
+}
+
 #[derive(Debug)]
 pub(crate) struct Token {
     t: TokenType,
-    lexeme: String,
+    lexeme: TokenValue,
     line: usize,
     literal: String,
 }
@@ -63,7 +93,16 @@ impl Token {
     pub fn new(t: TokenType, lexeme: String, literal: &str, line: usize) -> Self {
         Token {
             t,
-            lexeme: lexeme.to_string(),
+            lexeme: TokenValue::Str(lexeme),
+            line,
+            literal: literal.to_string(),
+        }
+    }
+
+    pub fn with_value(t: TokenType, value: TokenValue, literal: &str, line: usize) -> Self {
+        Token {
+            t,
+            lexeme: value,
             line,
             literal: literal.to_string(),
         }
@@ -77,7 +116,7 @@ impl Token {
         self.line
     }
 
-    pub fn lexeme(&self) -> &str {
+    pub fn lexeme(&self) -> &TokenValue {
         &self.lexeme
     }
 
@@ -88,6 +127,6 @@ impl Token {
 
 impl Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?} {} {}", self.t, self.lexeme, self.literal)
+        write!(f, "{:?} {:?} {}", self.t, self.lexeme, self.literal)
     }
 }
