@@ -1,6 +1,6 @@
 use super::{
     error,
-    token::{Token, TokenType, TokenValue},
+    token::{Token, TokenType, TokenLiteral},
 };
 
 pub(crate) struct Scanner {
@@ -134,12 +134,12 @@ fn has_more(&self) -> bool {
 
     fn push_token_with_str(&mut self, t: TokenType, value: String) {
         self.tokens
-            .push(Token::with_value(t, TokenValue::Str(value), "", self.line));
+            .push(Token::with_value(t, TokenLiteral::Str(value), "", self.line));
     }
 
     fn push_token_with_num(&mut self, t: TokenType, value: f64) {
         self.tokens
-            .push(Token::with_value(t, TokenValue::Num(value), "", self.line));
+            .push(Token::with_value(t, TokenLiteral::Num(value), "", self.line));
     }
 
     fn substring(&self, start: usize, end: usize) -> String {
@@ -248,7 +248,7 @@ fn has_more(&self) -> bool {
 #[cfg(test)]
 mod tests {
     use crate::{
-        riolox::token::{TokenType, TokenValue},
+        riolox::token::{TokenType, TokenLiteral},
         *,
     };
 
@@ -296,7 +296,7 @@ mod tests {
         assert_eq!(tokens[0].token_type(), &TokenType::LeftBrace);
         assert_eq!(tokens[1].line(), 1);
         assert_eq!(tokens[1].token_type(), &TokenType::String);
-        assert_eq!(tokens[1].lexeme(), &TokenValue::Str("hello".to_owned()));
+        assert_eq!(tokens[1].literal(), &TokenLiteral::Str("hello".to_owned()));
         assert_eq!(tokens[2].line(), 1);
         assert_eq!(tokens[2].token_type(), &TokenType::RightBrace);
         assert_eq!(tokens[3].line(), 1);
@@ -335,7 +335,7 @@ mod tests {
 
         assert_eq!(tokens.len(), 2);
         assert_eq!(tokens[0].token_type(), &TokenType::String);
-        assert_eq!(tokens[0].lexeme(), &TokenValue::Str("hello".to_owned()));
+        assert_eq!(tokens[0].literal(), &TokenLiteral::Str("hello".to_owned()));
         assert_eq!(tokens[1].token_type(), &TokenType::Eof);
     }
 
@@ -359,7 +359,7 @@ mod tests {
 
         assert_eq!(tokens.len(), 2);
         assert_eq!(tokens[0].token_type(), &TokenType::Number);
-        assert_eq!(tokens[0].lexeme(), &TokenValue::Num(123.0));
+        assert_eq!(tokens[0].literal(), &TokenLiteral::Num(123.0));
         assert_eq!(tokens[1].token_type(), &TokenType::Eof);
     }
 
@@ -372,7 +372,7 @@ mod tests {
 
         assert_eq!(tokens.len(), 2);
         assert_eq!(tokens[0].token_type(), &TokenType::Number);
-        assert_eq!(tokens[0].lexeme(), &TokenValue::Num(123.5));
+        assert_eq!(tokens[0].literal(), &TokenLiteral::Num(123.5));
         assert_eq!(tokens[1].token_type(), &TokenType::Eof);
     }
 
@@ -386,7 +386,7 @@ mod tests {
         println!("{:?}", tokens);
         assert_eq!(tokens.len(), 2);
         assert_eq!(tokens[0].token_type(), &TokenType::Identifier);
-        assert_eq!(tokens[0].lexeme(), &TokenValue::Str("witam".to_owned()));
+        assert_eq!(tokens[0].literal(), &TokenLiteral::Str("witam".to_owned()));
         assert_eq!(tokens[1].token_type(), &TokenType::Eof);
     }
 
@@ -399,7 +399,7 @@ mod tests {
 
         assert_eq!(tokens.len(), 2);
         assert_eq!(tokens[0].token_type(), &TokenType::Identifier);
-        assert_eq!(tokens[0].lexeme(), &TokenValue::Str("witam2".to_owned()));
+        assert_eq!(tokens[0].literal(), &TokenLiteral::Str("witam2".to_owned()));
         assert_eq!(tokens[1].token_type(), &TokenType::Eof);
     }
 

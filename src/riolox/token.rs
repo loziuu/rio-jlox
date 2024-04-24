@@ -76,7 +76,7 @@ impl From<&str> for TokenType {
 }
 
 #[derive(Debug, PartialEq)]
-pub(crate) enum TokenValue {
+pub(crate) enum TokenLiteral {
     Str(String),
     Num(f64),
 }
@@ -84,27 +84,27 @@ pub(crate) enum TokenValue {
 #[derive(Debug)]
 pub(crate) struct Token {
     t: TokenType,
-    lexeme: TokenValue,
+    literal: TokenLiteral,
     line: usize,
-    literal: String,
+    lexeme: String,
 }
 
 impl Token {
-    pub fn new(t: TokenType, lexeme: String, literal: &str, line: usize) -> Self {
+    pub fn new(t: TokenType, literal: String, lexeme: &str, line: usize) -> Self {
         Token {
             t,
-            lexeme: TokenValue::Str(lexeme),
+            literal: TokenLiteral::Str(literal),
             line,
-            literal: literal.to_string(),
+            lexeme: lexeme.to_string(),
         }
     }
 
-    pub fn with_value(t: TokenType, value: TokenValue, literal: &str, line: usize) -> Self {
+    pub fn with_value(t: TokenType, literal: TokenLiteral, lexeme: &str, line: usize) -> Self {
         Token {
             t,
-            lexeme: value,
+            literal,
             line,
-            literal: literal.to_string(),
+            lexeme: lexeme.to_string(),
         }
     }
 
@@ -116,17 +116,17 @@ impl Token {
         self.line
     }
 
-    pub fn lexeme(&self) -> &TokenValue {
-        &self.lexeme
+    pub fn literal(&self) -> &TokenLiteral {
+        &self.literal
     }
 
-    pub fn literal(&self) -> &str {
-        &self.literal
+    pub fn lexeme(&self) -> &str {
+        &self.lexeme
     }
 }
 
 impl Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?} {:?} {}", self.t, self.lexeme, self.literal)
+        write!(f, "{:?} {:?} {}", self.t, self.literal, self.lexeme)
     }
 }
