@@ -60,6 +60,8 @@ impl Visitor<String> for RpnPrinter {
 
 #[cfg(test)]
 mod tests {
+    use std::rc::Rc;
+
     use tests::{parser::Expr, token::{Token, TokenType}};
 
     use crate::riolox::*;
@@ -71,9 +73,9 @@ mod tests {
         let minus = 
             Token::new(TokenType::Minus, "-".to_owned(), "-", 1);
         let unary =
-            Box::new(Expr::Unary(minus,  Box::new(Expr::Literal("123".to_owned()))));
+            Rc::new(Expr::Unary(minus,  Rc::new(Expr::Literal("123".to_owned()))));
         let grouping =
-            Box::new(Expr::Grouping(Box::new(Expr::Literal("45.67".to_owned()))));
+            Rc::new(Expr::Grouping(Rc::new(Expr::Literal("45.67".to_owned()))));
         let expr = Expr::Binary(
             unary, Token::new(TokenType::Star, "*".to_owned(), "*", 1), grouping);
 
@@ -85,17 +87,17 @@ mod tests {
 
     #[test]
     fn test_rpn() {
-        let one = Box::new(Expr::Literal("1".to_owned())); 
-        let two  = Box::new(Expr::Literal("2".to_owned())); 
-        let three  = Box::new(Expr::Literal("3".to_owned())); 
-        let four  = Box::new(Expr::Literal("4".to_owned())); 
+        let one = Rc::new(Expr::Literal("1".to_owned())); 
+        let two  = Rc::new(Expr::Literal("2".to_owned())); 
+        let three  = Rc::new(Expr::Literal("3".to_owned())); 
+        let four  = Rc::new(Expr::Literal("4".to_owned())); 
         let plus = Token::new(TokenType::Plus, "+".to_owned(), "+", 1);
         let minus = Token::new(TokenType::Minus, "-".to_owned(), "-", 1);
         let times = Token::new(TokenType::Star, "*".to_owned(), "*", 1);
 
-        let left = Expr::Grouping(Box::new(Expr::Binary(one, plus, two)));
-        let right = Expr::Grouping(Box::new(Expr::Binary(four, minus, three)));
-        let expr = Expr::Binary(Box::new(left), times, Box::new(right));
+        let left = Expr::Grouping(Rc::new(Expr::Binary(one, plus, two)));
+        let right = Expr::Grouping(Rc::new(Expr::Binary(four, minus, three)));
+        let expr = Expr::Binary(Rc::new(left), times, Rc::new(right));
 
         let printer = RpnPrinter{};
         let result = printer.print(&expr);
