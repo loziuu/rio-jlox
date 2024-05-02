@@ -42,8 +42,12 @@ impl Parser {
         let mut expr = self.comparison();
 
         while self.match_token(&[TokenType::EqualEqual, TokenType::BangEqual]) {
-                let prev_token = self.previous();
-                expr = Rc::new(Expr::Binary(expr.clone(), prev_token.as_ref().clone(), self.comparison().clone()))
+            let prev_token = self.previous();
+            expr = Rc::new(Expr::Binary(
+                expr.clone(),
+                prev_token.as_ref().clone(),
+                self.comparison().clone(),
+            ))
         }
 
         expr
@@ -52,10 +56,19 @@ impl Parser {
     fn comparison(&mut self) -> Rc<Expr> {
         let mut expr = self.term();
 
-        while self.match_token(&[TokenType::Greater, TokenType::GreaterEqual, TokenType::Less, TokenType::LessEqual]) {
+        while self.match_token(&[
+            TokenType::Greater,
+            TokenType::GreaterEqual,
+            TokenType::Less,
+            TokenType::LessEqual,
+        ]) {
             let prev_token = self.previous();
 
-            expr = Rc::new(Expr::Binary(expr.clone(), prev_token.as_ref().clone(), self.term().clone()));
+            expr = Rc::new(Expr::Binary(
+                expr.clone(),
+                prev_token.as_ref().clone(),
+                self.term().clone(),
+            ));
         }
 
         expr
@@ -67,7 +80,11 @@ impl Parser {
         while self.match_token(&[TokenType::Plus, TokenType::Minus]) {
             let prev_token = self.previous();
 
-            expr = Rc::new(Expr::Binary(expr.clone(), prev_token.as_ref().clone(), self.factor().clone()));
+            expr = Rc::new(Expr::Binary(
+                expr.clone(),
+                prev_token.as_ref().clone(),
+                self.factor().clone(),
+            ));
         }
 
         expr
@@ -79,7 +96,11 @@ impl Parser {
         while self.match_token(&[TokenType::Star, TokenType::Slash]) {
             let prev_token = self.previous();
 
-            expr = Rc::new(Expr::Binary(expr.clone(), prev_token.as_ref().clone(), self.unary().clone()));
+            expr = Rc::new(Expr::Binary(
+                expr.clone(),
+                prev_token.as_ref().clone(),
+                self.unary().clone(),
+            ));
         }
 
         expr
@@ -88,16 +109,43 @@ impl Parser {
     fn unary(&mut self) -> Rc<Expr> {
         if self.match_token(&[TokenType::Bang, TokenType::Minus]) {
             let previous = self.previous();
-            return Rc::new(Expr::Unary(previous.as_ref().clone(), self.unary()))
+            return Rc::new(Expr::Unary(previous.as_ref().clone(), self.unary()));
         }
 
         self.primary()
     }
 
     fn primary(&mut self) -> Rc<Expr> {
-        // TODO: Implement this.
+        if self.match_token(&[TokenType::False]) {
+            return Rc::new(Expr::Literal(TokenLiteral::Bool(false)));
+        }
+
+        if self.match_token(&[TokenType::True]) {
+            return Rc::new(Expr::Literal(TokenLiteral::Bool(true)));
+        }
+
+        if self.match_token(&[TokenType::Number]) {
+            let previous = self.previous();
+            return Rc::new(Expr::Literal(previous.literal().clone()));
+        }
+
+        if self.match_token(&[TokenType::String]) {
+            let previous = self.previous();
+            return Rc::new(Expr::Literal(previous.literal().clone()));
+        }
+
+        if self.match_token(&[TokenType::LeftParen]) {
+            let expr = self.expression();
+            if self.match_token(&[TokenType::RightParen]) {
+                return Rc::new(Expr::Grouping(expr));
+            } else {
+                panic!("')' expected, but not found!");
+            }
+        }
+
+        return Rc::new(Expr::Literal(TokenLiteral::Str("nil".to_owned())));
     }
-    
+
     fn previous(&self) -> Rc<Token> {
         self.tokens[self.current - 1].clone()
     }

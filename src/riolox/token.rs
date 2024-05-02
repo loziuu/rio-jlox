@@ -79,6 +79,17 @@ impl From<&str> for TokenType {
 pub(crate) enum TokenLiteral {
     Str(String),
     Num(f64),
+    Bool(bool),
+}
+
+impl ToString for TokenLiteral {
+    fn to_string(&self) -> String {
+        match self {
+            TokenLiteral::Str(s) => s.to_string(),
+            TokenLiteral::Num(n) => n.to_string(),
+            TokenLiteral::Bool(b) => b.to_string(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

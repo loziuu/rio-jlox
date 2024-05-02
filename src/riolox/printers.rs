@@ -46,7 +46,7 @@ impl RpnPrinter {
 impl Visitor<String> for RpnPrinter {
     fn visit(&self, expr: &Expr) -> String {
         match expr {
-            Expr::Literal(val) => val.to_owned(),
+            Expr::Literal(val) => val.to_string(),
             Expr::Unary(token, expr) => format!("{}{}", token.lexeme(), self.visit(expr)),
             Expr::Binary(left, token, right) => format!("{} {} {}", self.visit(left), self.visit(right), token.lexeme()),
             Expr::Grouping(expr) => self.visit(expr),
@@ -73,9 +73,9 @@ mod tests {
         let minus = 
             Token::new(TokenType::Minus, "-".to_owned(), "-", 1);
         let unary =
-            Rc::new(Expr::Unary(minus,  Rc::new(Expr::Literal("123".to_owned()))));
+            Rc::new(Expr::Unary(minus,  Rc::new(Expr::Literal(token::TokenLiteral::Str("123".to_owned())))));
         let grouping =
-            Rc::new(Expr::Grouping(Rc::new(Expr::Literal("45.67".to_owned()))));
+            Rc::new(Expr::Grouping(Rc::new(Expr::Literal(token::TokenLiteral::Str("45.67".to_owned())))));
         let expr = Expr::Binary(
             unary, Token::new(TokenType::Star, "*".to_owned(), "*", 1), grouping);
 
@@ -87,10 +87,10 @@ mod tests {
 
     #[test]
     fn test_rpn() {
-        let one = Rc::new(Expr::Literal("1".to_owned())); 
-        let two  = Rc::new(Expr::Literal("2".to_owned())); 
-        let three  = Rc::new(Expr::Literal("3".to_owned())); 
-        let four  = Rc::new(Expr::Literal("4".to_owned())); 
+        let one  = Rc::new(Expr::Literal(token::TokenLiteral::Str("1".to_owned()))); 
+        let two  = Rc::new(Expr::Literal(token::TokenLiteral::Str("2".to_owned()))); 
+        let three  = Rc::new(Expr::Literal(token::TokenLiteral::Str("3".to_owned()))); 
+        let four  = Rc::new(Expr::Literal(token::TokenLiteral::Str("4".to_owned()))); 
         let plus = Token::new(TokenType::Plus, "+".to_owned(), "+", 1);
         let minus = Token::new(TokenType::Minus, "-".to_owned(), "-", 1);
         let times = Token::new(TokenType::Star, "*".to_owned(), "*", 1);
