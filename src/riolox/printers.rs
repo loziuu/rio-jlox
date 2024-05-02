@@ -62,7 +62,7 @@ impl Visitor<String> for RpnPrinter {
 mod tests {
     use std::rc::Rc;
 
-    use tests::{parser::Expr, token::{Token, TokenType}};
+    use tests::{parser::Expr, token::{Token, TokenLiteral, TokenType}};
 
     use crate::riolox::*;
 
@@ -73,9 +73,9 @@ mod tests {
         let minus = 
             Token::new(TokenType::Minus, "-".to_owned(), "-", 1);
         let unary =
-            Rc::new(Expr::Unary(minus,  Rc::new(Expr::Literal(token::TokenLiteral::Str("123".to_owned())))));
+            Rc::new(Expr::Unary(minus,  Rc::new(Expr::Literal(TokenLiteral::from("123")))));
         let grouping =
-            Rc::new(Expr::Grouping(Rc::new(Expr::Literal(token::TokenLiteral::Str("45.67".to_owned())))));
+            Rc::new(Expr::Grouping(Rc::new(Expr::Literal(TokenLiteral::from("45.67")))));
         let expr = Expr::Binary(
             unary, Token::new(TokenType::Star, "*".to_owned(), "*", 1), grouping);
 
@@ -87,10 +87,11 @@ mod tests {
 
     #[test]
     fn test_rpn() {
-        let one  = Rc::new(Expr::Literal(token::TokenLiteral::Str("1".to_owned()))); 
-        let two  = Rc::new(Expr::Literal(token::TokenLiteral::Str("2".to_owned()))); 
-        let three  = Rc::new(Expr::Literal(token::TokenLiteral::Str("3".to_owned()))); 
-        let four  = Rc::new(Expr::Literal(token::TokenLiteral::Str("4".to_owned()))); 
+        let one  = Rc::new(Expr::Literal(TokenLiteral::from("1"))); 
+        let two  = Rc::new(Expr::Literal(TokenLiteral::from("2"))); 
+        let three  = Rc::new(Expr::Literal(TokenLiteral::from("3"))); 
+        let four  = Rc::new(Expr::Literal(TokenLiteral::from("4"))); 
+
         let plus = Token::new(TokenType::Plus, "+".to_owned(), "+", 1);
         let minus = Token::new(TokenType::Minus, "-".to_owned(), "-", 1);
         let times = Token::new(TokenType::Star, "*".to_owned(), "*", 1);

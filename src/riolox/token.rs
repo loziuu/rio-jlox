@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, str::FromStr};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub(crate) enum TokenType {
@@ -80,6 +80,12 @@ pub(crate) enum TokenLiteral {
     Str(String),
     Num(f64),
     Bool(bool),
+}
+
+impl From<&str> for TokenLiteral {
+    fn from(value: &str) -> Self {
+        TokenLiteral::Str(value.to_string())
+    }
 }
 
 impl ToString for TokenLiteral {

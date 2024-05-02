@@ -143,7 +143,7 @@ impl Parser {
             }
         }
 
-        return Rc::new(Expr::Literal(TokenLiteral::Str("nil".to_owned())));
+        Rc::new(Expr::Literal(TokenLiteral::Str("nil".to_owned())))
     }
 
     fn previous(&self) -> Rc<Token> {
