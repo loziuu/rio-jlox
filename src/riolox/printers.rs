@@ -1,9 +1,9 @@
 use super::parser::{Expr, Visitor};
 
-struct AstPrinter;
+pub struct AstPrinter;
 
 impl AstPrinter {
-    fn print(&self, expr: &Expr) -> String {
+    pub fn print(&self, expr: &Expr) -> String {
         expr.visit(self)
     }
 
@@ -24,7 +24,7 @@ impl Visitor<String> for AstPrinter {
             Expr::Literal(val) => val.to_string(),
             Expr::Unary(token, expr) => self.parenthesize(token.lexeme(), vec![expr.as_ref()]),
             Expr::Binary(left, op, right) => {
-                self.parenthesize(op.lexeme(), vec![left.as_ref(), right.as_ref()])
+                self.parenthesize(&op.literal().to_string(), vec![left.as_ref(), right.as_ref()])
             }
             Expr::Grouping(expr) => self.parenthesize("group", vec![expr.as_ref()]),
         }
@@ -47,7 +47,7 @@ impl Visitor<String> for RpnPrinter {
     fn visit(&self, expr: &Expr) -> String {
         match expr {
             Expr::Literal(val) => val.to_string(),
-            Expr::Unary(token, expr) => format!("{}{}", token.lexeme(), self.visit(expr)),
+            Expr::Unary(token, expr) => format!("{}{}", token.literal().to_string(), self.visit(expr)),
             Expr::Binary(left, token, right) => format!("{} {} {}", self.visit(left), self.visit(right), token.lexeme()),
             Expr::Grouping(expr) => self.visit(expr),
         }

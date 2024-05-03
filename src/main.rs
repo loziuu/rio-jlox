@@ -1,8 +1,14 @@
-use std::{fs::read_to_string, io::stdin};
+use std::{
+    fs::read_to_string,
+    io::{stdin, stdout, Write},
+};
 
-use riolox::{scanner::Scanner, CompilerResult};
+use riolox::{
+    parser::Parser, printers::AstPrinter, scanner::Scanner, CompilationError, CompilerResult,
+};
 
 mod riolox;
+
 fn main() {
     let mut args = std::env::args();
     args.next().unwrap();
@@ -28,9 +34,12 @@ fn run_file(file: String) {
 
 fn run_prompt() {
     let stdin = stdin();
+    let mut stdout = stdout();
 
     loop {
-        print!("> ");
+        stdout.write(b"> ").unwrap();
+        stdout.flush().unwrap();
+
         let mut buffer = "".to_owned();
         let line = stdin.read_line(&mut buffer);
 
@@ -52,12 +61,17 @@ fn run(source: String) {
 fn try_run(source: String) -> CompilerResult {
     let mut scanner = Scanner::new(source);
     let tokens = scanner.scan_tokens();
+    // TODO: Remove clone
+    let mut parser = Parser::new(tokens.to_vec());
 
-    for token in tokens {
-        println!("{:?}", token);
+    let result = parser.parse();
+
+    if result.is_none() {
+        return Err(CompilationError::UndefinedError);
     }
+
+    let printer = AstPrinter {};
+    println!("{}", printer.print(&result.unwrap()));
 
     Ok(())
 }
-
-

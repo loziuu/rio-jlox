@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use super::{
     error,
     token::{Token, TokenType, TokenLiteral},
@@ -6,7 +8,7 @@ use super::{
 pub(crate) struct Scanner {
     // TODO: Use char0
     source: String,
-    tokens: Vec<Token>,
+    tokens: Vec<Rc<Token>>,
     start: usize,
     current: usize,
     line: usize,
@@ -23,14 +25,14 @@ impl Scanner {
         }
     }
 
-    pub fn scan_tokens(&mut self) -> &[Token] {
+    pub fn scan_tokens(&mut self) -> &[Rc<Token>] {
         while self.has_more() {
             self.start = self.current;
             self.scan_token(); // This will probably need to be aligned...
         }
 
         self.tokens
-            .push(Token::new(TokenType::Eof, "".to_string(), "", self.line));
+            .push(Rc::new(Token::new(TokenType::Eof, "".to_string(), "", self.line)));
         self.tokens.as_ref()
     }
 fn has_more(&self) -> bool {
@@ -129,17 +131,17 @@ fn has_more(&self) -> bool {
     fn push_token(&mut self, t: TokenType) {
         // TODO: What if we assume that it's only ASCII?
         let text = self.substring(self.start, self.current);
-        self.tokens.push(Token::new(t, text, "", self.line));
+        self.tokens.push(Rc::new(Token::new(t, text, "", self.line)));
     }
 
     fn push_token_with_str(&mut self, t: TokenType, value: String) {
         self.tokens
-            .push(Token::with_value(t, TokenLiteral::Str(value), "", self.line));
+            .push(Rc::new(Token::with_value(t, TokenLiteral::Str(value), "", self.line)));
     }
 
     fn push_token_with_num(&mut self, t: TokenType, value: f64) {
         self.tokens
-            .push(Token::with_value(t, TokenLiteral::Num(value), "", self.line));
+            .push(Rc::new(Token::with_value(t, TokenLiteral::Num(value), "", self.line)));
     }
 
     fn substring(&self, start: usize, end: usize) -> String {

@@ -2,11 +2,35 @@ use std::rc::Rc;
 
 use super::token::{Token, TokenLiteral, TokenType};
 
+type ParseResult = Result<Rc<Expr>, ParseError>;
+
+
+#[derive(Debug)]
 pub enum Expr {
     Literal(TokenLiteral), // Is it really?
     Unary(Token, Rc<Expr>),
     Binary(Rc<Expr>, Token, Rc<Expr>),
     Grouping(Rc<Expr>),
+}
+
+pub enum ParseError {
+    Generic(Rc<Token>, String),
+}
+
+impl ParseError {
+    pub fn token(&self) -> &Token {
+        match self {
+            ParseError::Generic(token, _) => token,
+        }
+    }
+}
+
+impl ToString for ParseError {
+    fn to_string(&self) -> String {
+        match self {
+            ParseError::Generic(_, msg) => msg.to_string(),
+        }
+    }
 }
 
 impl Expr {
@@ -34,27 +58,31 @@ impl Parser {
         Self { tokens, current: 0 }
     }
 
-    fn expression(&mut self) -> Rc<Expr> {
+    pub fn parse(&mut self) -> Option<Rc<Expr>> {
+        self.expression().ok()
+    }
+
+    fn expression(&mut self) -> ParseResult {
         self.equality()
     }
 
-    fn equality(&mut self) -> Rc<Expr> {
-        let mut expr = self.comparison();
+    fn equality(&mut self) -> ParseResult {
+        let mut expr = self.comparison()?;
 
         while self.match_token(&[TokenType::EqualEqual, TokenType::BangEqual]) {
             let prev_token = self.previous();
             expr = Rc::new(Expr::Binary(
-                expr.clone(),
+                expr,
                 prev_token.as_ref().clone(),
-                self.comparison().clone(),
+                self.comparison()?,
             ))
         }
 
-        expr
+        Ok(expr)
     }
 
-    fn comparison(&mut self) -> Rc<Expr> {
-        let mut expr = self.term();
+    fn comparison(&mut self) -> ParseResult {
+        let mut expr = self.term()?;
 
         while self.match_token(&[
             TokenType::Greater,
@@ -65,85 +93,104 @@ impl Parser {
             let prev_token = self.previous();
 
             expr = Rc::new(Expr::Binary(
-                expr.clone(),
+                expr,
                 prev_token.as_ref().clone(),
-                self.term().clone(),
+                self.term()?,
             ));
         }
 
-        expr
+        Ok(expr)
     }
 
-    fn term(&mut self) -> Rc<Expr> {
-        let mut expr = self.factor();
+    fn term(&mut self) -> ParseResult {
+        let mut expr = self.factor()?;
 
         while self.match_token(&[TokenType::Plus, TokenType::Minus]) {
             let prev_token = self.previous();
 
             expr = Rc::new(Expr::Binary(
-                expr.clone(),
+                expr,
                 prev_token.as_ref().clone(),
-                self.factor().clone(),
+                self.factor()?,
             ));
         }
 
-        expr
+        Ok(expr)
     }
 
-    fn factor(&mut self) -> Rc<Expr> {
-        let mut expr = self.unary();
+    fn factor(&mut self) -> ParseResult {
+        let mut expr = self.unary()?;
 
         while self.match_token(&[TokenType::Star, TokenType::Slash]) {
             let prev_token = self.previous();
 
             expr = Rc::new(Expr::Binary(
-                expr.clone(),
+                expr,
                 prev_token.as_ref().clone(),
-                self.unary().clone(),
+                self.unary()?,
             ));
         }
 
-        expr
+        Ok(expr)
     }
 
-    fn unary(&mut self) -> Rc<Expr> {
+    fn unary(&mut self) -> ParseResult {
         if self.match_token(&[TokenType::Bang, TokenType::Minus]) {
             let previous = self.previous();
-            return Rc::new(Expr::Unary(previous.as_ref().clone(), self.unary()));
+            return Ok(Rc::new(Expr::Unary(
+                previous.as_ref().clone(),
+                self.unary()?,
+            )));
         }
 
         self.primary()
     }
 
-    fn primary(&mut self) -> Rc<Expr> {
+    fn primary(&mut self) -> ParseResult {
         if self.match_token(&[TokenType::False]) {
-            return Rc::new(Expr::Literal(TokenLiteral::Bool(false)));
+            return Ok(Rc::new(Expr::Literal(TokenLiteral::Bool(false))));
         }
 
         if self.match_token(&[TokenType::True]) {
-            return Rc::new(Expr::Literal(TokenLiteral::Bool(true)));
+            return Ok(Rc::new(Expr::Literal(TokenLiteral::Bool(true))));
         }
 
         if self.match_token(&[TokenType::Number]) {
             let previous = self.previous();
-            return Rc::new(Expr::Literal(previous.literal().clone()));
+            return Ok(Rc::new(Expr::Literal(previous.literal().clone())));
         }
 
         if self.match_token(&[TokenType::String]) {
             let previous = self.previous();
-            return Rc::new(Expr::Literal(previous.literal().clone()));
+            return Ok(Rc::new(Expr::Literal(previous.literal().clone())));
         }
 
         if self.match_token(&[TokenType::LeftParen]) {
             let expr = self.expression();
-            if self.match_token(&[TokenType::RightParen]) {
-                return Rc::new(Expr::Grouping(expr));
-            } else {
-                panic!("')' expected, but not found!");
+
+            if expr.is_ok() {
+                if self.match_token(&[TokenType::RightParen]) {
+                    return Ok(Rc::new(Expr::Grouping(expr?)));
+                }
             }
+
+            // Change to consume I guess?
+            return Err(Self::error(ParseError::Generic(
+                self.previous(),
+                "Expected ')' after expression".to_owned(),
+            )));
         }
 
-        Rc::new(Expr::Literal(TokenLiteral::Str("nil".to_owned())))
+        Err(Self::error(ParseError::Generic(
+            self.peek().clone().into(),
+            "Expected expression.".to_owned(),
+        )))
+    }
+
+    fn error(error: ParseError) -> ParseError {
+        let token = error.token();
+        super::error(token.line(), &error.to_string());
+        error
     }
 
     fn previous(&self) -> Rc<Token> {
@@ -164,6 +211,29 @@ impl Parser {
         }
 
         false
+    }
+
+    fn synchronize(&mut self) {
+        self.advance();
+
+        while !self.finished() {
+            if self.previous().token_type() == &TokenType::Semicolon {
+                return;
+            }
+            match self.peek().token_type() {
+                TokenType::Return
+                | TokenType::Class
+                | TokenType::Fun
+                | TokenType::Var
+                | TokenType::For
+                | TokenType::If
+                | TokenType::While
+                | TokenType::Print => return,
+                _ => {}
+            }
+
+            self.advance();
+        }
     }
 
     fn advance(&mut self) -> &Token {

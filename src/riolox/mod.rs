@@ -1,7 +1,7 @@
 pub(crate) mod scanner;
 pub(crate) mod token;
 pub(crate) mod parser;
-mod printers;
+pub(crate) mod printers;
 
 pub(crate) type CompilerResult = Result<(), CompilationError>;
 
