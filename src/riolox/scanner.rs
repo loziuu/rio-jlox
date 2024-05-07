@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use super::{
     error,
-    token::{Token, TokenType, TokenLiteral},
+    token::{Token, TokenLiteral, TokenType},
 };
 
 pub(crate) struct Scanner {
@@ -31,11 +31,15 @@ impl Scanner {
             self.scan_token(); // This will probably need to be aligned...
         }
 
-        self.tokens
-            .push(Rc::new(Token::new(TokenType::Eof, "".to_string(), "", self.line)));
+        self.tokens.push(Rc::new(Token::new(
+            TokenType::Eof,
+            "".to_string(),
+            "",
+            self.line,
+        )));
         self.tokens.as_ref()
     }
-fn has_more(&self) -> bool {
+    fn has_more(&self) -> bool {
         self.current < self.source.len()
     }
 
@@ -44,6 +48,8 @@ fn has_more(&self) -> bool {
 
         if let Some(c) = advanced {
             match c {
+                '?' => self.push_token(TokenType::QuestionMark),
+                ':' => self.push_token(TokenType::Colon),
                 '(' => {
                     self.push_token(TokenType::LeftParen);
                 }
@@ -131,17 +137,26 @@ fn has_more(&self) -> bool {
     fn push_token(&mut self, t: TokenType) {
         // TODO: What if we assume that it's only ASCII?
         let text = self.substring(self.start, self.current);
-        self.tokens.push(Rc::new(Token::new(t, text, "", self.line)));
+        self.tokens
+            .push(Rc::new(Token::new(t, text, "", self.line)));
     }
 
     fn push_token_with_str(&mut self, t: TokenType, value: String) {
-        self.tokens
-            .push(Rc::new(Token::with_value(t, TokenLiteral::Str(value), "", self.line)));
+        self.tokens.push(Rc::new(Token::with_value(
+            t,
+            TokenLiteral::Str(value),
+            "",
+            self.line,
+        )));
     }
 
     fn push_token_with_num(&mut self, t: TokenType, value: f64) {
-        self.tokens
-            .push(Rc::new(Token::with_value(t, TokenLiteral::Num(value), "", self.line)));
+        self.tokens.push(Rc::new(Token::with_value(
+            t,
+            TokenLiteral::Num(value),
+            "",
+            self.line,
+        )));
     }
 
     fn substring(&self, start: usize, end: usize) -> String {
@@ -250,7 +265,7 @@ fn has_more(&self) -> bool {
 #[cfg(test)]
 mod tests {
     use crate::{
-        riolox::token::{TokenType, TokenLiteral},
+        riolox::token::{TokenLiteral, TokenType},
         *,
     };
 
@@ -431,5 +446,5 @@ mod tests {
         assert_eq!(tokens[15].token_type(), &TokenType::While);
         assert_eq!(tokens[16].token_type(), &TokenType::Identifier);
         assert_eq!(tokens[17].token_type(), &TokenType::Eof);
-    } 
+    }
 }

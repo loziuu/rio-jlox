@@ -1,9 +1,11 @@
 use std::rc::Rc;
 
-use super::token::{Token, TokenLiteral, TokenType};
+use super::{
+    error,
+    token::{Token, TokenLiteral, TokenType},
+};
 
 type ParseResult = Result<Rc<Expr>, ParseError>;
-
 
 #[derive(Debug)]
 pub enum Expr {
@@ -11,6 +13,7 @@ pub enum Expr {
     Unary(Token, Rc<Expr>),
     Binary(Rc<Expr>, Token, Rc<Expr>),
     Grouping(Rc<Expr>),
+    Conditional(Rc<Expr>, Rc<Expr>, Rc<Expr>),
 }
 
 pub enum ParseError {
@@ -63,7 +66,37 @@ impl Parser {
     }
 
     fn expression(&mut self) -> ParseResult {
-        self.equality()
+        self.comma_expression()
+    }
+
+    fn comma_expression(&mut self) -> ParseResult {
+        let mut expr = self.ternary()?;
+
+        while self.match_token(&[TokenType::Comma]) {
+            let token = self.previous();
+            let right = self.equality()?;
+            expr = Rc::new(Expr::Binary(expr, token.as_ref().clone(), right));
+        }
+
+        Ok(expr)
+    }
+
+    fn ternary(&mut self) -> ParseResult {
+        let expr = self.equality()?;
+
+        if self.match_token(&[TokenType::QuestionMark]) {
+            let then_ex = self.equality()?;
+            if self.match_token(&[TokenType::Colon]) {
+                let else_ex = self.equality()?;
+                return Ok(Rc::new(Expr::Conditional(expr, then_ex, else_ex)));
+            }
+            return Err(ParseError::Generic(
+                Rc::new(self.previous().as_ref().clone()),
+                "Colon exptected.".to_owned(),
+            ));
+        }
+
+        Ok(expr)
     }
 
     fn equality(&mut self) -> ParseResult {
@@ -166,31 +199,65 @@ impl Parser {
         }
 
         if self.match_token(&[TokenType::LeftParen]) {
-            let expr = self.expression();
+            let expr = self.expression()?;
 
-            if expr.is_ok() {
-                if self.match_token(&[TokenType::RightParen]) {
-                    return Ok(Rc::new(Expr::Grouping(expr?)));
-                }
+            if self.match_token(&[TokenType::RightParen]) {
+                return Ok(Rc::new(Expr::Grouping(expr)));
             }
 
             // Change to consume I guess?
-            return Err(Self::error(ParseError::Generic(
+            return Self::error(ParseError::Generic(
                 self.previous(),
                 "Expected ')' after expression".to_owned(),
-            )));
+            ));
         }
 
-        Err(Self::error(ParseError::Generic(
+        if self.match_token(&[TokenType::BangEqual, TokenType::EqualEqual]) {
+            let prev = self.previous();
+            let _ = self.equality();
+            return Self::error(ParseError::Generic(
+                prev,
+                "Expected left hand operand".to_owned(),
+            ));
+        }
+
+        if self.match_token(&[TokenType::Less, TokenType::LessEqual, TokenType::Greater, TokenType::GreaterEqual]) {
+            let prev = self.previous();
+            let _ = self.comparison();
+            return Self::error(ParseError::Generic(
+                prev,
+                "Expected left hand operand".to_owned(),
+            ));
+        }
+
+        if self.match_token(&[TokenType::Plus]) {
+            let prev = self.previous();
+            let _ = self.term();
+            return Self::error(ParseError::Generic(
+                prev,
+                "Expected left hand operand".to_owned(),
+            ));
+        }
+
+        if self.match_token(&[TokenType::Slash, TokenType::Star]) {
+            let prev = self.previous();
+            let _ = self.factor();
+            return Self::error(ParseError::Generic(
+                prev,
+                "Expected left hand operand".to_owned(),
+            ));
+        }
+
+        Self::error(ParseError::Generic(
             self.peek().clone().into(),
             "Expected expression.".to_owned(),
-        )))
+        ))
     }
 
-    fn error(error: ParseError) -> ParseError {
+    fn error(error: ParseError) -> ParseResult {
         let token = error.token();
         super::error(token.line(), &error.to_string());
-        error
+        Err(error)
     }
 
     fn previous(&self) -> Rc<Token> {

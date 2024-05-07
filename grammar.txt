@@ -1,9 +1,9 @@
-comma          → expression ("," comma)?
 expression     → literal
                | unary
                | binary
-               | grouping ;
-
+               | grouping 
+               | comma;
+comma          → expression ("," comma)?
 literal        → NUMBER | STRING | "true" | "false" | "nil" ;
 grouping       → "(" expression ")" ;
 unary          → ( "-" | "!" ) expression ;

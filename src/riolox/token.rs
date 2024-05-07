@@ -1,4 +1,4 @@
-use std::{fmt::Display, str::FromStr};
+use std::fmt::Display;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub(crate) enum TokenType {
@@ -14,6 +14,8 @@ pub(crate) enum TokenType {
     Semicolon,
     Slash,
     Star,
+    QuestionMark,
+    Colon,
 
     // One or two character
     Bang,
