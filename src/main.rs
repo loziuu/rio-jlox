@@ -37,13 +37,13 @@ fn run_prompt() {
     let mut stdout = stdout();
 
     loop {
-        stdout.write(b"> ").unwrap();
+        stdout.write_all(b"> ").unwrap();
         stdout.flush().unwrap();
 
         let mut buffer = "".to_owned();
         let line = stdin.read_line(&mut buffer);
 
-        if let Ok(_) = line {
+        if line.is_ok() {
             let _ = try_run(buffer);
         } else {
             break;
@@ -64,14 +64,14 @@ fn try_run(source: String) -> CompilerResult {
     // TODO: Remove clone
     let mut parser = Parser::new(tokens.to_vec());
 
-    let result = parser.parse();
+    let expression = parser.parse();
 
-    if result.is_none() {
+    if expression.is_none() {
         return Err(CompilationError::UndefinedError);
     }
 
     let printer = AstPrinter {};
-    println!("{}", printer.print(&result.unwrap()));
+    println!("{}", printer.print(&expression.unwrap()));
 
     Ok(())
 }

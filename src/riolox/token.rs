@@ -72,7 +72,7 @@ impl From<&str> for TokenType {
             "true" => TokenType::True,
             "var" => TokenType::Var,
             "while" => TokenType::While,
-            _ => TokenType::Identifier
+            _ => TokenType::Identifier,
         }
     }
 }
@@ -90,19 +90,19 @@ impl From<&str> for TokenLiteral {
     }
 }
 
-impl ToString for TokenLiteral {
-    fn to_string(&self) -> String {
+impl Display for TokenLiteral {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            TokenLiteral::Str(s) => s.to_string(),
-            TokenLiteral::Num(n) => n.to_string(),
-            TokenLiteral::Bool(b) => b.to_string(),
+            TokenLiteral::Str(s) => f.write_str(s),
+            TokenLiteral::Num(n) => f.write_str(n.to_string().as_str()),
+            TokenLiteral::Bool(b) => f.write_str(b.to_string().as_str()),
         }
     }
 }
 
 #[derive(Debug, Clone)]
 pub(crate) struct Token {
-    t: TokenType,
+    pub t: TokenType,
     literal: TokenLiteral,
     line: usize,
     lexeme: String,

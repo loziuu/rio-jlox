@@ -1,55 +1,12 @@
 use std::rc::Rc;
 
 use super::{
-    error,
+    error::ParseError,
     token::{Token, TokenLiteral, TokenType},
+    Expr,
 };
 
 type ParseResult = Result<Rc<Expr>, ParseError>;
-
-#[derive(Debug)]
-pub enum Expr {
-    Literal(TokenLiteral), // Is it really?
-    Unary(Token, Rc<Expr>),
-    Binary(Rc<Expr>, Token, Rc<Expr>),
-    Grouping(Rc<Expr>),
-    Conditional(Rc<Expr>, Rc<Expr>, Rc<Expr>),
-}
-
-pub enum ParseError {
-    Generic(Rc<Token>, String),
-}
-
-impl ParseError {
-    pub fn token(&self) -> &Token {
-        match self {
-            ParseError::Generic(token, _) => token,
-        }
-    }
-}
-
-impl ToString for ParseError {
-    fn to_string(&self) -> String {
-        match self {
-            ParseError::Generic(_, msg) => msg.to_string(),
-        }
-    }
-}
-
-impl Expr {
-    pub fn visit<V, R>(&self, v: &V) -> R
-    where
-        R: Sized,
-        V: Visitor<R>,
-    {
-        v.visit(self)
-    }
-}
-
-pub trait Visitor<R: Sized> {
-    fn visit(&self, expr: &Expr) -> R;
-    fn visit_mut(&mut self, expr: &Expr) -> R;
-}
 
 pub struct Parser {
     tokens: Vec<Rc<Token>>,
@@ -221,7 +178,12 @@ impl Parser {
             ));
         }
 
-        if self.match_token(&[TokenType::Less, TokenType::LessEqual, TokenType::Greater, TokenType::GreaterEqual]) {
+        if self.match_token(&[
+            TokenType::Less,
+            TokenType::LessEqual,
+            TokenType::Greater,
+            TokenType::GreaterEqual,
+        ]) {
             let prev = self.previous();
             let _ = self.comparison();
             return Self::error(ParseError::Generic(

@@ -1,4 +1,4 @@
-use super::parser::{Expr, Visitor};
+use super::{visitor::Visitor, Expr};
 
 pub struct AstPrinter;
 
@@ -8,7 +8,7 @@ impl AstPrinter {
     }
 
     fn parenthesize(&self, name: &str, exprs: Vec<&Expr>) -> String {
-        let mut val = format!("{name}");
+        let mut val = name.to_string();
 
         for expr in exprs {
             val = format!("{} {}", val, expr.visit(self))
@@ -23,12 +23,14 @@ impl Visitor<String> for AstPrinter {
         match expr {
             Expr::Literal(val) => val.to_string(),
             Expr::Unary(token, expr) => self.parenthesize(token.lexeme(), vec![expr.as_ref()]),
-            Expr::Binary(left, op, right) => {
-                self.parenthesize(&op.literal().to_string(), vec![left.as_ref(), right.as_ref()])
-            }
+            Expr::Binary(left, op, right) => self.parenthesize(
+                &op.literal().to_string(),
+                vec![left.as_ref(), right.as_ref()],
+            ),
             Expr::Grouping(expr) => self.parenthesize("group", vec![expr.as_ref()]),
-            Expr::Conditional(if_ex, then_ex, else_ex) => 
-                self.parenthesize("?", vec![if_ex, then_ex, else_ex]),
+            Expr::Conditional(if_ex, then_ex, else_ex) => {
+                self.parenthesize("?", vec![if_ex, then_ex, else_ex])
+            }
         }
     }
 
@@ -41,7 +43,10 @@ impl Visitor<String> for AstPrinter {
 mod tests {
     use std::rc::Rc;
 
-    use tests::{parser::Expr, token::{Token, TokenLiteral, TokenType}};
+    use tests::{
+        parser::Expr,
+        token::{Token, TokenLiteral, TokenType},
+    };
 
     use crate::riolox::*;
 
@@ -49,16 +54,21 @@ mod tests {
 
     #[test]
     fn test_first() {
-        let minus = 
-            Token::new(TokenType::Minus, "-".to_owned(), "-", 1);
-        let unary =
-            Rc::new(Expr::Unary(minus,  Rc::new(Expr::Literal(TokenLiteral::from("123")))));
-        let grouping =
-            Rc::new(Expr::Grouping(Rc::new(Expr::Literal(TokenLiteral::from("45.67")))));
+        let minus = Token::new(TokenType::Minus, "-".to_owned(), "-", 1);
+        let unary = Rc::new(Expr::Unary(
+            minus,
+            Rc::new(Expr::Literal(TokenLiteral::from("123"))),
+        ));
+        let grouping = Rc::new(Expr::Grouping(Rc::new(Expr::Literal(TokenLiteral::from(
+            "45.67",
+        )))));
         let expr = Expr::Binary(
-            unary, Token::new(TokenType::Star, "*".to_owned(), "*", 1), grouping);
+            unary,
+            Token::new(TokenType::Star, "*".to_owned(), "*", 1),
+            grouping,
+        );
 
-        let printer = AstPrinter{};
+        let printer = AstPrinter {};
         let result = printer.print(&expr);
 
         assert_eq!("(* (- 123) (group 45.67))", result)
